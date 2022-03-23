@@ -1,18 +1,17 @@
-import React, { Component } from 'react';
+import React, { useEffect, useState } from 'react';
 
-export class FetchData extends Component {
-  static displayName = FetchData.name;
+interface Forecast {
+  date: string,
+  temperatureC: number,
+  temperatureF: number,
+  summary: string
+}
 
-  constructor(props) {
-    super(props);
-    this.state = { forecasts: [], loading: true };
-  }
+export const FetchData = () => {
+  const [forecasts, setForecasts] = useState<Forecast[]>();
+  const [loading, setLoading] = useState(true);
 
-  componentDidMount() {
-    this.populateWeatherData();
-  }
-
-  static renderForecastsTable(forecasts) {
+  const renderForecastsTable = () => {
     return (
       <table className='table table-striped' aria-labelledby="tabelLabel">
         <thead>
@@ -24,7 +23,7 @@ export class FetchData extends Component {
           </tr>
         </thead>
         <tbody>
-          {forecasts.map(forecast =>
+          {forecasts?.map(forecast =>
             <tr key={forecast.date}>
               <td>{forecast.date}</td>
               <td>{forecast.temperatureC}</td>
@@ -37,10 +36,20 @@ export class FetchData extends Component {
     );
   }
 
-  render() {
-    let contents = this.state.loading
+  const populateWeatherData = async() => {
+    const response = await fetch('weatherforecast');
+    const data = await response.json();
+    setForecasts(data)
+    setLoading(false);
+  }
+
+  useEffect(() => {
+    populateWeatherData();
+  }, [])
+
+  const contents = loading
       ? <p><em>Loading...</em></p>
-      : FetchData.renderForecastsTable(this.state.forecasts);
+      : renderForecastsTable();
 
     return (
       <div>
@@ -49,11 +58,4 @@ export class FetchData extends Component {
         {contents}
       </div>
     );
-  }
-
-  async populateWeatherData() {
-    const response = await fetch('weatherforecast');
-    const data = await response.json();
-    this.setState({ forecasts: data, loading: false });
-  }
 }
